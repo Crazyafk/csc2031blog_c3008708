@@ -5,18 +5,6 @@ from flask import render_template
 def index():
     return render_template('home/index.html')
 
-@app.route('/registration')
-def registration():
-    return render_template('accounts/registration.html')
-
-@app.route('/login')
-def login():
-    return render_template('accounts/login.html')
-
-@app.route('/account')
-def account():
-    return render_template('accounts/account.html')
-
 @app.route('/create')
 def create():
     return render_template('posts/create.html')
