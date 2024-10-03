@@ -1,4 +1,8 @@
 from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+from sqlalchemy import MetaData
+from datetime import datetime
 
 app = Flask(__name__)
 
