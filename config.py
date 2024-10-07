@@ -83,12 +83,18 @@ class MainIndexLink(MenuLink):
 class PostView(ModelView):
     column_display_pk = True
     column_hide_backrefs = False
-    column_list = ('id', 'created', 'title', 'body')
+    column_list = ('id', 'userid', 'created', 'title', 'body', 'user')
+
+class UserView(ModelView):
+    column_display_pk = True
+    column_hide_backrefs = False
+    column_list = ('id', 'email', 'password', 'firstname', 'lastname', 'phone', 'posts')
 
 admin = Admin(app, name='DB Admin', template_mode='bootstrap4')
 admin._menu = admin._menu[1:]
 admin.add_link(MainIndexLink(name='Home Page'))
 admin.add_view(PostView(Post, db.session))
+admin.add_view(UserView(User, db.session))
 
 # IMPORT BLUEPRINTS
 from accounts.views import accounts_bp
