@@ -42,3 +42,11 @@ def update(id):
     form.body.data = post_to_update.body
 
     return render_template('posts/update.html', form=form)
+
+@posts_bp.route('/<int:id>/delete')
+def delete(id):
+    Post.query.filter_by(id=id).delete()
+    db.session.commit()
+
+    flash('Post deleted', category='success')
+    return redirect(url_for('posts.posts'))
