@@ -1,9 +1,12 @@
+from flask_admin.menu import MenuLink
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import MetaData
 from config import app
-from flask import render_template
+from flask import render_template, url_for
 from datetime import datetime
+from flask_admin import Admin
+from flask_admin.contrib.sqla import ModelView
 
 # DATABASE CONFIGURATION
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///csc2031blog.db'
@@ -36,6 +39,21 @@ class Post(db.Model):
        self.created = datetime.now()
        self.title = title
        self.body = body
+
+# DATABASE ADMINISTRATOR
+class MainIndexLink(MenuLink):
+    def get_url(self):
+        return url_for('index')
+
+class PostView(ModelView):
+    column_display_pk = True
+    column_hide_backrefs = False
+    column_list = ('id', 'created', 'title', 'body')
+
+admin = Admin(app, name='DB Admin', template_mode='bootstrap4')
+admin._menu = admin._menu[1:]
+admin.add_link(MainIndexLink(name='Home Page'))
+admin.add_view(PostView(Post, db.session))
 
 @app.route('/')
 def index():
