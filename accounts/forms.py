@@ -11,3 +11,8 @@ class RegistrationForm(FlaskForm):
     password = PasswordField(validators=[DataRequired()])
     confirm_password = PasswordField(validators=[DataRequired(), EqualTo('password', message='Both password fields must be equal!')])
     submit = SubmitField()
+
+class LoginForm(FlaskForm):
+    email = StringField(validators=[DataRequired()])
+    password = PasswordField(validators=[DataRequired()])
+    submit = SubmitField()

@@ -75,6 +75,9 @@ class User(db.Model):
         self.phone = phone
         self.password = password
 
+    def verify_password(self, _submitted):
+        return _submitted == self.password
+
 # DATABASE ADMINISTRATOR
 class MainIndexLink(MenuLink):
     def get_url(self):
