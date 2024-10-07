@@ -27,6 +27,9 @@
                         <small>{{ post.created.strftime('%H:%M:%S %d-%m-%Y') }}</small>
                     </div>
                     <div class="card-body">{{ post.body }}</div>
+                    <div class="card-footer">
+                        <a class="navbar-item" href="{{ url_for('posts.update', id=post.id) }}">Update</a>
+                    </div>
                 </div>
                 <br>
                 {% endfor %}

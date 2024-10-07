@@ -31,17 +31,23 @@ migrate = Migrate(app, db)
 
 # DATABASE TABLES
 class Post(db.Model):
-   __tablename__ = 'posts'
+    __tablename__ = 'posts'
 
-   id = db.Column(db.Integer, primary_key=True)
-   created = db.Column(db.DateTime, nullable=False)
-   title = db.Column(db.Text, nullable=False)
-   body = db.Column(db.Text, nullable=False)
+    id = db.Column(db.Integer, primary_key=True)
+    created = db.Column(db.DateTime, nullable=False)
+    title = db.Column(db.Text, nullable=False)
+    body = db.Column(db.Text, nullable=False)
 
-   def __init__(self, title, body):
-       self.created = datetime.now()
-       self.title = title
-       self.body = body
+    def __init__(self, title, body):
+        self.created = datetime.now()
+        self.title = title
+        self.body = body
+
+    def update(self, title, body):
+        self.created = datetime.now()
+        self.title = title
+        self.body = body
+        db.session.commit()
 
 # DATABASE ADMINISTRATOR
 class MainIndexLink(MenuLink):
