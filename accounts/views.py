@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, flash, redirect, url_for, session
 from accounts.forms import RegistrationForm, LoginForm
-from config import User, db
+from config import User, db, limiter
 from markupsafe import Markup
 
 accounts_bp = Blueprint('accounts', __name__, template_folder='templates')
@@ -33,6 +33,7 @@ def registration():
 
 
 @accounts_bp.route('/login', methods=['GET', 'POST'])
+@limiter.limit('20/minute')
 def login():
     form = LoginForm()
 

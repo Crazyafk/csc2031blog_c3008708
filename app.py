@@ -5,21 +5,9 @@ from flask import render_template
 def index():
     return render_template('home/index.html')
 
-@app.route('/create')
-def create():
-    return render_template('posts/create.html')
-
-@app.route('/update')
-def update():
-    return render_template('posts/update.html')
-
-@app.route('/posts')
-def posts():
-    return render_template('posts/posts.html')
-
-@app.route('/security')
-def security():
-    return render_template('security/security.html')
+@app.errorhandler(429)
+def http429(e):
+    return render_template('errors/429.html')
 
 if __name__ == '__main__':
     app.run()
