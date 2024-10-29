@@ -1,3 +1,4 @@
+import pyotp
 from flask import Flask, url_for
 
 from flask_admin import Admin
@@ -68,6 +69,8 @@ class User(db.Model):
     # User authentication information.
     email = db.Column(db.String(100), nullable=False, unique=True)
     password = db.Column(db.String(100), nullable=False)
+    mfa_enabled = db.Column(db.Boolean, nullable=False)
+    mfa_key = db.Column(db.String(32), nullable=False)
 
     # User information
     firstname = db.Column(db.String(100), nullable=False)
@@ -83,6 +86,8 @@ class User(db.Model):
         self.lastname = lastname
         self.phone = phone
         self.password = password
+        self.mfa_enabled = False
+        self.mfa_key = pyotp.random_base32()
 
     def verify_password(self, _submitted):
         return _submitted == self.password
@@ -103,11 +108,12 @@ class PostView(ModelView):
 class UserView(ModelView):
     column_display_pk = True
     column_hide_backrefs = False
-    column_list = ('id', 'email', 'password', 'firstname', 'lastname', 'phone', 'posts')
+    column_list = ('id', 'email', 'password', 'firstname', 'lastname', 'phone', 'posts', 'mfa_enabled', 'mfa_key')
 
 
 admin = Admin(app, name='DB Admin', template_mode='bootstrap4')
 admin._menu = admin._menu[1:]
+app.config['FLASK_ADMIN_FLUID_LAYOUT'] = True
 admin.add_link(MainIndexLink(name='Home Page'))
 admin.add_view(PostView(Post, db.session))
 admin.add_view(UserView(User, db.session))
