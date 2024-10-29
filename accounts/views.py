@@ -26,8 +26,8 @@ def registration():
         db.session.add(new_user)
         db.session.commit()
 
-        flash('Account Created', category='success')
-        return redirect(url_for('accounts.login'))
+        flash('Account Created. You must Set up MFA before logging in', category='success')
+        return render_template('accounts/mfa.html', key=new_user.mfa_key)
 
     return render_template('accounts/registration.html', form=form)
 

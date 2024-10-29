@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>MFA Setup</h1>
+            <div>
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} mt-3 alert-dismissible" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" onclick=delete_flash(this)>
+                                <span>&times;</span>
+                            </button>
+                        </div>
+                    {% endfor %}
+                {% endwith %}
+            </div>
+    <p>Set up Multi-Factor Authentication using the Following code: </p>
+    {% if key %}
+        <p>{{ key }}</p>
+    {% endif %}
+    <p>Finished? <a href={{ url_for(accounts.login) }}>login</a> </p>
+{% endblock %}
