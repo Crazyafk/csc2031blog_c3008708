@@ -6,6 +6,7 @@ from flask_admin.contrib.sqla import ModelView
 from flask_admin.menu import MenuLink
 import secrets
 
+from flask_login import LoginManager, UserMixin
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from sqlalchemy import MetaData
@@ -37,6 +38,10 @@ metadata = MetaData(
 db = SQLAlchemy(app, metadata=metadata)
 migrate = Migrate(app, db)
 
+# CREATE LOGIN MANAGER
+login_manager = LoginManager()
+login_manager.init_app(app)
+
 
 # DATABASE TABLES
 class Post(db.Model):
@@ -49,10 +54,11 @@ class Post(db.Model):
     body = db.Column(db.Text, nullable=False)
     user = db.relationship("User", back_populates="posts")
 
-    def __init__(self, title, body):
+    def __init__(self, userid, title, body):
         self.created = datetime.now()
         self.title = title
         self.body = body
+        self.userid = userid
 
     def update(self, title, body):
         self.created = datetime.now()
@@ -61,7 +67,7 @@ class Post(db.Model):
         db.session.commit()
 
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -91,6 +97,10 @@ class User(db.Model):
 
     def verify_password(self, _submitted):
         return _submitted == self.password
+
+    @login_manager.user_loader
+    def load_user(id):
+        return User.query.get(int(id))
 
 
 # DATABASE ADMINISTRATOR

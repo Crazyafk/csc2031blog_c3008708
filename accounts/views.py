@@ -1,3 +1,4 @@
+import flask_login
 from flask import Blueprint, render_template, flash, redirect, url_for, session
 from accounts.forms import RegistrationForm, LoginForm
 from config import User, db, limiter
@@ -48,6 +49,7 @@ def login():
 
         # ----VALID LOGIN----
         if user and user.verify_password(form.password.data):
+            flask_login.login_user(user)
             flash('Authentication Success', category='success')
             return redirect(url_for('posts.posts'))
 
@@ -80,3 +82,9 @@ def account():
 def unlock():
     session["login attempts"] = 0
     return redirect(url_for('accounts.login'))
+
+
+@accounts_bp.route('/logout')
+def logout():
+    flask_login.logout_user()
+    return redirect(url_for('index'))
