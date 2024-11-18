@@ -7,6 +7,7 @@ from flask_admin.menu import MenuLink
 import secrets
 
 from flask_login import LoginManager, UserMixin
+from flask_qrcode import QRcode
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from sqlalchemy import MetaData
@@ -41,6 +42,9 @@ migrate = Migrate(app, db)
 # CREATE LOGIN MANAGER
 login_manager = LoginManager()
 login_manager.init_app(app)
+
+# INIT QRCODE
+qrcode = QRcode(app)
 
 
 # DATABASE TABLES
@@ -97,6 +101,13 @@ class User(db.Model, UserMixin):
 
     def verify_password(self, _submitted):
         return _submitted == self.password
+
+    def verify_pin(self, _submitted):
+        return pyotp.TOTP(self.mfa_key).verify(_submitted)
+
+    @property
+    def uri(self):
+        return str(pyotp.totp.TOTP(self.mfa_key).provisioning_uri(self.email, "2031 Blog"))
 
     @login_manager.user_loader
     def load_user(id):

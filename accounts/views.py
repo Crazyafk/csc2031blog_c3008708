@@ -28,7 +28,7 @@ def registration():
         db.session.commit()
 
         flash('Account Created. You must Set up MFA before logging in', category='success')
-        return render_template('accounts/mfa.html', key=new_user.mfa_key)
+        return render_template('accounts/mfa.html', key=new_user.mfa_key, uri=new_user.uri)
 
     return render_template('accounts/registration.html', form=form)
 
@@ -48,10 +48,26 @@ def login():
         user = User.query.filter_by(email=form.email.data).first()
 
         # ----VALID LOGIN----
-        if user and user.verify_password(form.password.data):
+        if user and user.verify_password(form.password.data) and user.mfa_enabled and user.verify_pin(form.pin.data):
             flask_login.login_user(user)
             flash('Authentication Success', category='success')
             return redirect(url_for('posts.posts'))
+
+        # ----MFA SETUP----
+        elif user and user.verify_password(form.password.data) and not user.mfa_enabled:
+            # ----VALID LOGIN ENABLING MFA----
+            if user.verify_pin(form.pin.data):
+                user.mfa_enabled = True
+                db.session.commit()
+
+                flask_login.login_user(user)
+                flash('Authentication Success', category='success')
+                return redirect(url_for('posts.posts'))
+
+            # ----MUST SETUP MFA----
+            else:
+                flash('You must Set up MFA before logging in', category='success')
+                return render_template('accounts/mfa.html', key=user.mfa_key, uri=user.uri)
 
         # ----INVALID--------
         else:

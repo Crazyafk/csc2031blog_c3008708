@@ -14,9 +14,14 @@
                     {% endfor %}
                 {% endwith %}
             </div>
-    <p>Set up Multi-Factor Authentication using the Following code: </p>
+    <p>Install an Authenticator app such as Authy.</p>
+    <p>Set up Multi-Factor Authentication using the Following QR code, or enter the code below manually: </p>
+    {% if uri %}
+        <img src="{{ qrcode(uri, box_size=5, border=5) }}">
+    {% endif %}
     {% if key %}
         <p>{{ key }}</p>
     {% endif %}
-    <p>Finished? <a href={{ url_for(accounts.login) }}>login</a> </p>
+
+    <p>Finished? <a href={{ url_for('accounts.login') }}>login</a> </p>
 {% endblock %}
