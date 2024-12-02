@@ -81,6 +81,7 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(100), nullable=False)
     mfa_enabled = db.Column(db.Boolean, nullable=False)
     mfa_key = db.Column(db.String(32), nullable=False)
+    active = db.Column(db.Boolean(), default=True, nullable=False)
 
     # User information
     firstname = db.Column(db.String(100), nullable=False)
@@ -108,6 +109,10 @@ class User(db.Model, UserMixin):
     @property
     def uri(self):
         return str(pyotp.totp.TOTP(self.mfa_key).provisioning_uri(self.email, "2031 Blog"))
+
+    @property
+    def is_active(self):
+        return self.active
 
     @login_manager.user_loader
     def load_user(id):

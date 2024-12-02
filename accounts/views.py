@@ -91,7 +91,7 @@ def login():
 
 @accounts_bp.route('/account')
 def account():
-    return render_template('accounts/account.html')
+    return render_template('accounts/account.html', user=flask_login.current_user)
 
 
 @accounts_bp.route('/unlock')
