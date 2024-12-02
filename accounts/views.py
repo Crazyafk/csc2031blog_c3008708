@@ -1,13 +1,15 @@
 import flask_login
 from flask import Blueprint, render_template, flash, redirect, url_for, session
 from accounts.forms import RegistrationForm, LoginForm
-from config import User, db, limiter
+from config import User, db, limiter, anonymous_required
 from markupsafe import Markup
+from flask_login import login_required
 
 accounts_bp = Blueprint('accounts', __name__, template_folder='templates')
 
 
 @accounts_bp.route('/registration', methods=['GET', 'POST'])
+@anonymous_required
 def registration():
     form = RegistrationForm()
 
@@ -35,6 +37,7 @@ def registration():
 
 @accounts_bp.route('/login', methods=['GET', 'POST'])
 @limiter.limit('20/minute')
+@anonymous_required
 def login():
     form = LoginForm()
 
@@ -90,6 +93,7 @@ def login():
 
 
 @accounts_bp.route('/account')
+@login_required
 def account():
     return render_template('accounts/account.html', user=flask_login.current_user)
 
@@ -101,6 +105,7 @@ def unlock():
 
 
 @accounts_bp.route('/logout')
+@login_required
 def logout():
     flask_login.logout_user()
     return redirect(url_for('index'))

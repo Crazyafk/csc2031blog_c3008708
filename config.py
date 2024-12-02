@@ -1,11 +1,14 @@
+from functools import wraps
+
 import pyotp
-from flask import Flask, url_for
+from flask import Flask, url_for, redirect, flash
 
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.menu import MenuLink
 import secrets
 
+import flask_login
 from flask_login import LoginManager, UserMixin
 from flask_qrcode import QRcode
 from flask_sqlalchemy import SQLAlchemy
@@ -41,6 +44,8 @@ migrate = Migrate(app, db)
 
 # CREATE LOGIN MANAGER
 login_manager = LoginManager()
+login_manager.login_view = 'accounts.login'
+login_manager.login_message_category = 'info'
 login_manager.init_app(app)
 
 # INIT QRCODE
@@ -130,11 +135,25 @@ class PostView(ModelView):
     column_hide_backrefs = False
     column_list = ('id', 'userid', 'created', 'title', 'body', 'user')
 
+    def is_accessible(self):
+        return flask_login.current_user.is_authenticated
+
+    def inaccessible_callback(self, name, **kwargs):
+        flash('Access Denied.', category='danger')
+        return redirect(url_for('posts.posts'))
+
 
 class UserView(ModelView):
     column_display_pk = True
     column_hide_backrefs = False
     column_list = ('id', 'email', 'password', 'firstname', 'lastname', 'phone', 'posts', 'mfa_enabled', 'mfa_key')
+
+    def is_accessible(self):
+        return flask_login.current_user.is_authenticated
+
+    def inaccessible_callback(self, name, **kwargs):
+        flash('Access Denied.', category='danger')
+        return redirect(url_for('posts.posts'))
 
 
 admin = Admin(app, name='DB Admin', template_mode='bootstrap4')
@@ -143,6 +162,17 @@ app.config['FLASK_ADMIN_FLUID_LAYOUT'] = True
 admin.add_link(MainIndexLink(name='Home Page'))
 admin.add_view(PostView(Post, db.session))
 admin.add_view(UserView(User, db.session))
+
+
+# CUSTOM DECORATORS
+def anonymous_required(f):
+    @wraps(f)
+    def wrapped(*args, **kwargs):
+        if flask_login.current_user.is_authenticated:
+            flash('You are already logged in', category='success')
+            return redirect(url_for('posts.posts'))
+        return f(*args, **kwargs)
+    return wrapped
 
 # RATE LIMITING
 limiter = Limiter(key_func=get_remote_address, app=app, default_limits=["500/day"])
