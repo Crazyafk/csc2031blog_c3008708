@@ -2,4 +2,32 @@
 
 {% block content %}
     <h1>Security</h1>
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">User #</th>
+                <th scope="col">Email</th>
+                <th scope="col">Role</th>
+                <th scope="col">Registered</th>
+                <th scope="col">Latest Login</th>
+                <th scope="col">Previous Login</th>
+                <th scope="col">Latest IP</th>
+                <th scope="col">Previous IP</th>
+            </tr>
+        </thead>
+        {% for log in logs %}
+        <tbody>
+            <tr>
+                <th scope="row">{{ log.user.id }}</th>
+                <td>{{ log.user.email }}</td>
+                <td>{{ log.user.role }}</td>
+                <td>{{ log.registered }}</td>
+                <td>{{ log.latest_login }}</td>
+                <td>{{ log.previous_login }}</td>
+                <td>{{ log.latest_ip }}</td>
+                <td>{{ log.previous_ip }}</td>
+            </tr>
+        </tbody>
+        {% endfor %}
+    </table>
 {% endblock %}

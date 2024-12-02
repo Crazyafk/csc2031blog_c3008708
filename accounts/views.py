@@ -29,6 +29,8 @@ def registration():
         db.session.add(new_user)
         db.session.commit()
 
+        new_user.generate_log()
+
         flash('Account Created. You must Set up MFA before logging in', category='success')
         return render_template('accounts/mfa.html', key=new_user.mfa_key, uri=new_user.uri)
 
@@ -53,6 +55,7 @@ def login():
         # ----VALID LOGIN----
         if user and user.verify_password(form.password.data) and user.mfa_enabled and user.verify_pin(form.pin.data):
             flask_login.login_user(user)
+            user.log.login()
             flash('Authentication Success', category='success')
             return redirect(url_for('posts.posts'))
 

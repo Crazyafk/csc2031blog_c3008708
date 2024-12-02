@@ -1,5 +1,6 @@
 from functools import wraps
 
+import flask
 import pyotp
 from flask import Flask, url_for, redirect, flash, render_template
 
@@ -96,8 +97,9 @@ class User(db.Model, UserMixin):
     lastname = db.Column(db.String(100), nullable=False)
     phone = db.Column(db.String(100), nullable=False)
 
-    # User posts
+    # Relationships
     posts = db.relationship("Post", order_by=Post.id, back_populates="user")
+    log = db.relationship("Log", uselist=False, back_populates="user")
 
     def __init__(self, email, firstname, lastname, phone, password):
         self.email = email
@@ -107,6 +109,10 @@ class User(db.Model, UserMixin):
         self.password = password
         self.mfa_enabled = False
         self.mfa_key = pyotp.random_base32()
+
+    def generate_log(self):
+        db.session.add(Log(self.id))
+        db.session.commit()
 
     def verify_password(self, _submitted):
         return _submitted == self.password
@@ -125,6 +131,30 @@ class User(db.Model, UserMixin):
     @login_manager.user_loader
     def load_user(id):
         return User.query.get(int(id))
+
+
+class Log(db.Model):
+    __tablename__ = "logs"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    user = db.relationship("User", back_populates="log")
+
+    registration = db.Column(db.DateTime, nullable=False)
+    latest_login = db.Column(db.DateTime)
+    previous_login = db.Column(db.DateTime)
+    latest_login_ip = db.Column(db.String)
+    previous_login_ip = db.Column(db.String)
+
+    def __init__(self, user_id):
+        self.user_id = user_id
+        self.registration = datetime.now()
+
+    def login(self):
+        self.previous_login = self.latest_login
+        self.previous_login_ip = self.latest_login_ip
+        self.latest_login = datetime.now()
+        self.latest_login_ip = flask.request.remote_addr
 
 
 # DATABASE ADMINISTRATOR
