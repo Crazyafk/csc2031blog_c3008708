@@ -1,7 +1,7 @@
 from functools import wraps
 
 import pyotp
-from flask import Flask, url_for, redirect, flash
+from flask import Flask, url_for, redirect, flash, render_template
 
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
@@ -88,6 +88,9 @@ class User(db.Model, UserMixin):
     mfa_key = db.Column(db.String(32), nullable=False)
     active = db.Column(db.Boolean(), default=True, nullable=False)
 
+    # User role. Possible values: 'end_user', 'sec_admin', 'db_admin'
+    role = db.Column(db.String(20), default='end_user', nullable=False)
+
     # User information
     firstname = db.Column(db.String(100), nullable=False)
     lastname = db.Column(db.String(100), nullable=False)
@@ -135,25 +138,38 @@ class PostView(ModelView):
     column_hide_backrefs = False
     column_list = ('id', 'userid', 'created', 'title', 'body', 'user')
 
+    can_edit = False
+    can_create = False
+    can_delete = False
+
     def is_accessible(self):
-        return flask_login.current_user.is_authenticated
+        return flask_login.current_user.is_authenticated and flask_login.current_user.role == "db_admin"
 
     def inaccessible_callback(self, name, **kwargs):
-        flash('Access Denied.', category='danger')
-        return redirect(url_for('posts.posts'))
-
+        if flask_login.current_user.is_authenticated:
+            return render_template('errors/403.html')
+        else:
+            flash("Login to view this Page.", category='info')
+            return redirect(url_for('accounts.login'))
 
 class UserView(ModelView):
     column_display_pk = True
     column_hide_backrefs = False
-    column_list = ('id', 'email', 'password', 'firstname', 'lastname', 'phone', 'posts', 'mfa_enabled', 'mfa_key')
+    column_list = ('id', 'role', 'email', 'password', 'firstname', 'lastname', 'phone', 'posts', 'mfa_enabled', 'mfa_key')
+
+    can_edit = False
+    can_create = False
+    can_delete = False
 
     def is_accessible(self):
-        return flask_login.current_user.is_authenticated
+        return flask_login.current_user.is_authenticated and flask_login.current_user.role == "db_admin"
 
     def inaccessible_callback(self, name, **kwargs):
-        flash('Access Denied.', category='danger')
-        return redirect(url_for('posts.posts'))
+        if flask_login.current_user.is_authenticated:
+            return render_template('errors/403.html')
+        else:
+            flash("Login to view this Page.", category='info')
+            return redirect(url_for('accounts.login'))
 
 
 admin = Admin(app, name='DB Admin', template_mode='bootstrap4')
@@ -173,6 +189,16 @@ def anonymous_required(f):
             return redirect(url_for('posts.posts'))
         return f(*args, **kwargs)
     return wrapped
+
+def roles_required(*roles):
+    def inner_decorator(f):
+        @wraps(f)
+        def wrapped(*args,**kwargs):
+            if flask_login.current_user.role not in roles:
+                return render_template('errors/403.html')
+            return f(*args,**kwargs)
+        return wrapped
+    return inner_decorator
 
 # RATE LIMITING
 limiter = Limiter(key_func=get_remote_address, app=app, default_limits=["500/day"])
