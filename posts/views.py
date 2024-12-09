@@ -1,6 +1,7 @@
+import flask
 import flask_login
 from flask import Blueprint, render_template, flash, url_for, redirect
-from config import db, Post, roles_required
+from config import db, Post, roles_required, logger
 from posts.forms import PostForm
 from sqlalchemy import desc
 from flask_login import login_required
@@ -9,14 +10,18 @@ posts_bp = Blueprint('posts', __name__, template_folder='templates')
 
 @posts_bp.route('/create', methods=('GET', 'POST'))
 @login_required
-@roles_required("end_user")
+@roles_required("/create","end_user")
 def create():
     form = PostForm()
     if form.validate_on_submit():
-        new_post = Post(userid=flask_login.current_user.get_id() ,title=form.title.data, body=form.body.data)
+        user = flask_login.current_user
+        new_post = Post(userid=user.id ,title=form.title.data, body=form.body.data)
 
         db.session.add(new_post)
         db.session.commit()
+
+        logger.info(f"Post Created. Email: {user.email} Role: {user.role} Post ID: {new_post.id} "
+                    f"IP: {flask.request.remote_addr}")
 
         flash('Post created', category='success')
         return redirect(url_for('posts.posts'))
@@ -24,26 +29,29 @@ def create():
 
 @posts_bp.route('/posts')
 @login_required
-@roles_required("end_user")
+@roles_required("/posts","end_user")
 def posts():
     all_posts = Post.query.order_by(desc('id')).all()
     return render_template('posts/posts.html', posts=all_posts)
 
 @posts_bp.route('/<int:id>/update', methods=('GET', 'POST'))
 @login_required
-@roles_required("end_user")
+@roles_required("/{id}/update","end_user")
 def update(id):
     post_to_update = Post.query.filter_by(id=id).first()
+    user = flask_login.current_user
     if not post_to_update:
         return redirect(url_for('posts.posts'))
 
-    if post_to_update.user.id == flask_login.current_user.id:
+    if post_to_update.user.id == user.id:
         form = PostForm()
 
         if form.validate_on_submit():
             post_to_update.update(title=form.title.data, body=form.body.data)
 
             flash('Post updated', category='success')
+            logger.info(f"Post Updated. Email: {user.email} Role: {user.role} Post ID: {post_to_update.id} "
+                        f"Author Email: {post_to_update.user.email} IP: {flask.request.remote_addr}")
             return redirect(url_for('posts.posts'))
 
         form.title.data = post_to_update.title
@@ -56,12 +64,15 @@ def update(id):
 
 @posts_bp.route('/<int:id>/delete')
 @login_required
-@roles_required("end_user")
+@roles_required('/{id}/delete', "end_user")
 def delete(id):
     post_to_delete = Post.query.filter_by(id=id).first()
+    user = flask_login.current_user
     if not post_to_delete:
         return redirect(url_for('posts.posts'))
-    if post_to_delete.user.id == flask_login.current_user.id:
+    if post_to_delete.user.id == user.id:
+        logger.info(f"Post Deleted. Email: {user.email} Role: {user.role} Post ID: {post_to_delete.id} "
+                    f"Author Email: {post_to_delete.user.email} IP: {flask.request.remote_addr}")
         db.session.delete(post_to_delete)
         db.session.commit()
         flash('Post deleted', category='success')

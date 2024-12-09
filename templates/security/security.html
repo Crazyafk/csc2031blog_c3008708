@@ -2,6 +2,7 @@
 
 {% block content %}
     <h1>Security</h1>
+    <h2>User Logs</h2>
     <table class="table">
         <thead>
             <tr>
@@ -30,4 +31,10 @@
         </tbody>
         {% endfor %}
     </table>
+    <h2>Log File Recent</h2>
+    <ul>
+    {% for log in logfile %}
+        <li>{{ log }}</li>
+    {% endfor %}
+    </ul>
 {% endblock %}

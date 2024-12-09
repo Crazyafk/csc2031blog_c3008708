@@ -54,9 +54,10 @@ login_manager.init_app(app)
 qrcode = QRcode(app)
 
 # INIT LOGGER
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Security Log")
 handler = logging.FileHandler('security.log')
-handler.setLevel(logging.INFO)
+handler.setLevel(0)
 formatter = logging.Formatter('%(asctime)s : %(message)s', '%d/%m/%Y %I:%M:%S %p')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
@@ -187,15 +188,20 @@ class PostView(ModelView):
 
     def inaccessible_callback(self, name, **kwargs):
         if flask_login.current_user.is_authenticated:
+            user = flask_login.current_user
+            logger.info(f"Unauthorised Role Access Attempt. Email: {user.email} Role: {user.role}"
+                        f" Requested URL: /admin/ IP:{flask.request.remote_addr}")
             return render_template('errors/403.html')
         else:
             flash("Login to view this Page.", category='info')
             return redirect(url_for('accounts.login'))
 
+
 class UserView(ModelView):
     column_display_pk = True
     column_hide_backrefs = False
-    column_list = ('id', 'role', 'email', 'password', 'firstname', 'lastname', 'phone', 'posts', 'mfa_enabled', 'mfa_key')
+    column_list = (
+    'id', 'role', 'email', 'password', 'firstname', 'lastname', 'phone', 'posts', 'mfa_enabled', 'mfa_key')
 
     can_edit = False
     can_create = False
@@ -206,6 +212,9 @@ class UserView(ModelView):
 
     def inaccessible_callback(self, name, **kwargs):
         if flask_login.current_user.is_authenticated:
+            user = flask_login.current_user
+            logger.info(f"Unauthorised Role Access Attempt. Email: {user.email} Role: {user.role}"
+                        f" Requested URL: /admin/ IP:{flask.request.remote_addr}")
             return render_template('errors/403.html')
         else:
             flash("Login to view this Page.", category='info')
@@ -228,17 +237,25 @@ def anonymous_required(f):
             flash('You are already logged in', category='success')
             return redirect(url_for('posts.posts'))
         return f(*args, **kwargs)
+
     return wrapped
 
-def roles_required(*roles):
+
+def roles_required(url, *roles):
     def inner_decorator(f):
         @wraps(f)
-        def wrapped(*args,**kwargs):
+        def wrapped(*args, **kwargs):
             if flask_login.current_user.role not in roles:
+                user = flask_login.current_user
+                logger.info(f"Unauthorised Role Access Attempt. Email: {user.email} Role: {user.role}"
+                            f" Requested URL: {url} IP:{flask.request.remote_addr}")
                 return render_template('errors/403.html')
-            return f(*args,**kwargs)
+            return f(*args, **kwargs)
+
         return wrapped
+
     return inner_decorator
+
 
 # RATE LIMITING
 limiter = Limiter(key_func=get_remote_address, app=app, default_limits=["500/day"])

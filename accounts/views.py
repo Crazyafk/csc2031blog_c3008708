@@ -32,7 +32,7 @@ def registration():
 
         new_user.generate_log()
 
-        logger.info(f"User Registered. Email:{new_user.email} Role:{new_user.role} IP:{flask.request.remote_addr}")
+        logger.info(f"User Registered. Email: {new_user.email} Role: {new_user.role} IP: {flask.request.remote_addr}")
 
         flash('Account Created. You must Set up MFA before logging in', category='success')
         return render_template('accounts/mfa.html', key=new_user.mfa_key, uri=new_user.uri)
@@ -59,6 +59,7 @@ def login():
         if user and user.verify_password(form.password.data) and user.mfa_enabled and user.verify_pin(form.pin.data):
             flask_login.login_user(user)
             user.log.login()
+            logger.info(f"Successful Login. Email: {user.email} Role: {user.role} IP: {flask.request.remote_addr}")
             flash('Authentication Success', category='success')
             return redirect(url_for('posts.posts'))
 
@@ -71,6 +72,7 @@ def login():
 
                 flask_login.login_user(user)
                 user.log.login()
+                logger.info(f"Successful Login. Email: {user.email} Role: {user.role} IP: {flask.request.remote_addr}")
                 flash('Authentication Success', category='success')
                 return redirect(url_for('posts.posts'))
 
@@ -82,6 +84,8 @@ def login():
         # ----INVALID--------
         else:
             session["login attempts"] += 1
+            logger.info(f"Unsuccessful Login Attempt. Email: {user.email} Attempts Made: {session['login attempts']}"
+                        f" IP: {flask.request.remote_addr}")
 
             # ATTEMPTS REMAINING
             if session["login attempts"] < max_login_attempts:
@@ -89,8 +93,11 @@ def login():
                     max_login_attempts - session["login attempts"]),
                     category='danger')
                 return render_template('accounts/login.html', form=form)
+
             # LOCKOUT
             else:
+                logger.info(f"Maximum Failed Login Attempts Reached. Email: {user.email} Attempts Made: {session['login attempts']}"
+                            f" IP: {flask.request.remote_addr}")
                 flash(Markup(
                     'Incorrect Credentials. Exceeded Allowed Login Attempts. <a href="/unlock">Unlock Account</a>'
                 ), category='danger')
