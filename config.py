@@ -1,6 +1,8 @@
 import base64
 import logging
+import os
 from functools import wraps
+from dotenv import load_dotenv, set_key
 
 import flask
 import pyotp
@@ -24,16 +26,17 @@ from flask_limiter.util import get_remote_address
 from argon2 import PasswordHasher
 from hashlib import scrypt
 
+load_dotenv()
 app = Flask(__name__)
 
 # CAPTCHA KEYS
-app.config['RECAPTCHA_PUBLIC_KEY'] = "6LdgyVUqAAAAAOlpHkzRlx7dr2F0SYp3QTp5Mo96"
-app.config['RECAPTCHA_PRIVATE_KEY'] = "6LdgyVUqAAAAANmq8UrWlHqa4taLr7ZR8nJWh_Pd"
+app.config['RECAPTCHA_PUBLIC_KEY'] = os.getenv('RECAPTCHA_PUBLIC_KEY')
+app.config['RECAPTCHA_PRIVATE_KEY'] = os.getenv('RECAPTCHA_PRIVATE_KEY')
 
 # DATABASE CONFIGURATION
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///csc2031blog.db'
-app.config['SQLALCHEMY_ECHO'] = True
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI')
+app.config['SQLALCHEMY_ECHO'] = (os.getenv('SQLALCHEMY_ECHO') == "True")
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = (os.getenv('SQLALCHEMY_TRACK_MODIFICATIONS') == "True")
 
 metadata = MetaData(
     naming_convention={
@@ -148,7 +151,7 @@ class User(db.Model, UserMixin):
     @property
     def key(self):
         return base64.b64encode(scrypt(password=self.password.encode(), salt=self.salt.encode(),
-                      n=2048, r=8, p=1, dklen=32))
+                                       n=2048, r=8, p=1, dklen=32))
 
     @property
     def fernet(self):
@@ -249,7 +252,7 @@ class UserView(ModelView):
 
 admin = Admin(app, name='DB Admin', template_mode='bootstrap4')
 admin._menu = admin._menu[1:]
-app.config['FLASK_ADMIN_FLUID_LAYOUT'] = True
+app.config['FLASK_ADMIN_FLUID_LAYOUT'] = (os.getenv('FLASK_ADMIN_FLUID_LAYOUT') == "True")
 admin.add_link(MainIndexLink(name='Home Page'))
 admin.add_view(PostView(Post, db.session))
 admin.add_view(UserView(User, db.session))
@@ -282,6 +285,7 @@ def roles_required(url, *roles):
 
     return inner_decorator
 
+
 # RATE LIMITING
 limiter = Limiter(key_func=get_remote_address, app=app, default_limits=["500/day"])
 
@@ -291,7 +295,12 @@ from posts.views import posts_bp
 from security.views import security_bp
 
 # SECRET KEY FOR FLASK FORMS
-app.config['SECRET_KEY'] = secrets.token_hex(16)
+if os.getenv('SECRET_KEY'):
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+else:
+    secret_key = secrets.token_hex(16)
+    app.config['SECRET_KEY'] = secret_key
+    set_key(".env", key_to_set='SECRET_KEY', value_to_set=secret_key)
 
 # REGISTER BLUEPRINTS
 app.register_blueprint(accounts_bp)
