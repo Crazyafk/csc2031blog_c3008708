@@ -18,3 +18,4 @@ flask-qrcode
 WTForms
 pyotp
 argon2-cffi
+cryptography

@@ -15,7 +15,7 @@ def create():
     form = PostForm()
     if form.validate_on_submit():
         user = flask_login.current_user
-        new_post = Post(userid=user.id ,title=form.title.data, body=form.body.data)
+        new_post = Post(userid=user.id ,title=user.encrypt(form.title.data), body=user.encrypt(form.body.data))
 
         db.session.add(new_post)
         db.session.commit()
@@ -47,15 +47,15 @@ def update(id):
         form = PostForm()
 
         if form.validate_on_submit():
-            post_to_update.update(title=form.title.data, body=form.body.data)
+            post_to_update.update(title=user.encrypt(form.title.data), body=user.encrypt(form.body.data))
 
             flash('Post updated', category='success')
             logger.info(f"Post Updated. Email: {user.email} Role: {user.role} Post ID: {post_to_update.id} "
                         f"Author Email: {post_to_update.user.email} IP: {flask.request.remote_addr}")
             return redirect(url_for('posts.posts'))
 
-        form.title.data = post_to_update.title
-        form.body.data = post_to_update.body
+        form.title.data = user.decrypt(post_to_update.title)
+        form.body.data = user.decrypt(post_to_update.body)
     else:
         flash('You may not update another User\'s post.', category='info')
         return redirect(url_for('posts.posts'))

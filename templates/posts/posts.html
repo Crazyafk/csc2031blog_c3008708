@@ -23,11 +23,11 @@
                 {% for post in posts %}
                 <div class="card border border-dark">
                     <div class="card-header bg-dark text-white border border-dark">
-                        <h4>{{ post.title }}</h4>
+                        <h4>{{ post.user.decrypt(post.title) }}</h4>
                         <small>{{ post.user.firstname +" "+ post.user.lastname }}</small><br>
                         <small>{{ post.created.strftime('%H:%M:%S %d-%m-%Y') }}</small>
                     </div>
-                    <div class="card-body">{{ post.body }}</div>
+                    <div class="card-body">{{ post.user.decrypt(post.body) }}</div>
                     {% if current_user.id == post.user.id %}
                     <div class="card-footer">
                         <a class="navbar-item" href="{{ url_for('posts.update', id=post.id) }}">Update</a>

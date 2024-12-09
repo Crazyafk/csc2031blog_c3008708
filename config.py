@@ -1,8 +1,10 @@
+import base64
 import logging
 from functools import wraps
 
 import flask
 import pyotp
+from cryptography.fernet import Fernet
 from flask import Flask, url_for, redirect, flash, render_template
 
 from flask_admin import Admin
@@ -20,6 +22,7 @@ from datetime import datetime
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from argon2 import PasswordHasher
+from hashlib import scrypt
 
 app = Flask(__name__)
 
@@ -106,6 +109,9 @@ class User(db.Model, UserMixin):
     # User role. Possible values: 'end_user', 'sec_admin', 'db_admin'
     role = db.Column(db.String(20), default='end_user', nullable=False)
 
+    # Other
+    salt = db.Column(db.String(100), nullable=False)
+
     # User information
     firstname = db.Column(db.String(100), nullable=False)
     lastname = db.Column(db.String(100), nullable=False)
@@ -123,6 +129,7 @@ class User(db.Model, UserMixin):
         self.password = password
         self.mfa_enabled = False
         self.mfa_key = pyotp.random_base32()
+        self.salt = base64.b64encode(secrets.token_bytes(32)).decode()
 
     def generate_log(self):
         db.session.add(Log(self.id))
@@ -137,6 +144,21 @@ class User(db.Model, UserMixin):
     @property
     def uri(self):
         return str(pyotp.totp.TOTP(self.mfa_key).provisioning_uri(self.email, "2031 Blog"))
+
+    @property
+    def key(self):
+        return base64.b64encode(scrypt(password=self.password.encode(), salt=self.salt.encode(),
+                      n=2048, r=8, p=1, dklen=32))
+
+    @property
+    def fernet(self):
+        return Fernet(self.key)
+
+    def encrypt(self, data):
+        return self.fernet.encrypt(data.encode())
+
+    def decrypt(self, data):
+        return self.fernet.decrypt(data).decode()
 
     @property
     def is_active(self):
@@ -205,7 +227,7 @@ class UserView(ModelView):
     column_display_pk = True
     column_hide_backrefs = False
     column_list = (
-    'id', 'role', 'email', 'password', 'firstname', 'lastname', 'phone', 'posts', 'mfa_enabled', 'mfa_key')
+        'id', 'role', 'email', 'password', 'firstname', 'lastname', 'phone', 'posts', 'mfa_enabled', 'mfa_key', 'salt')
 
     can_edit = False
     can_create = False
