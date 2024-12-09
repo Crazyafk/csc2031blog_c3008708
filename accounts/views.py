@@ -2,7 +2,7 @@ import flask
 import flask_login
 from flask import Blueprint, render_template, flash, redirect, url_for, session
 from accounts.forms import RegistrationForm, LoginForm
-from config import User, db, limiter, anonymous_required, logger
+from config import User, db, limiter, anonymous_required, logger, ph
 from markupsafe import Markup
 from flask_login import login_required
 
@@ -20,11 +20,12 @@ def registration():
             flash('Email already exists', category="danger")
             return render_template('accounts/registration.html', form=form)
 
+        password = ph.hash(form.password.data)
         new_user = User(email=form.email.data,
                         firstname=form.firstname.data,
                         lastname=form.lastname.data,
                         phone=form.phone.data,
-                        password=form.password.data,
+                        password=password,
                         )
 
         db.session.add(new_user)

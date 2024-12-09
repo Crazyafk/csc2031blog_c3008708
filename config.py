@@ -19,6 +19,7 @@ from sqlalchemy import MetaData
 from datetime import datetime
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from argon2 import PasswordHasher
 
 app = Flask(__name__)
 
@@ -61,6 +62,9 @@ handler.setLevel(0)
 formatter = logging.Formatter('%(asctime)s : %(message)s', '%d/%m/%Y %I:%M:%S %p')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
+
+# INIT HASHING
+ph = PasswordHasher()
 
 
 # DATABASE TABLES
@@ -125,7 +129,7 @@ class User(db.Model, UserMixin):
         db.session.commit()
 
     def verify_password(self, _submitted):
-        return _submitted == self.password
+        return ph.verify(self.password, _submitted)
 
     def verify_pin(self, _submitted):
         return pyotp.TOTP(self.mfa_key).verify(_submitted)

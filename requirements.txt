@@ -17,3 +17,4 @@ Flask-Limiter
 flask-qrcode
 WTForms
 pyotp
+argon2-cffi
