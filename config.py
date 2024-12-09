@@ -282,7 +282,6 @@ def roles_required(url, *roles):
 
     return inner_decorator
 
-
 # RATE LIMITING
 limiter = Limiter(key_func=get_remote_address, app=app, default_limits=["500/day"])
 
