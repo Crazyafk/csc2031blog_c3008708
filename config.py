@@ -1,3 +1,4 @@
+import logging
 from functools import wraps
 
 import flask
@@ -51,6 +52,14 @@ login_manager.init_app(app)
 
 # INIT QRCODE
 qrcode = QRcode(app)
+
+# INIT LOGGER
+logger = logging.getLogger("Security Log")
+handler = logging.FileHandler('security.log')
+handler.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s : %(message)s', '%d/%m/%Y %I:%M:%S %p')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
 # DATABASE TABLES
@@ -155,6 +164,7 @@ class Log(db.Model):
         self.previous_login_ip = self.latest_login_ip
         self.latest_login = datetime.now()
         self.latest_login_ip = flask.request.remote_addr
+        db.session.commit()
 
 
 # DATABASE ADMINISTRATOR
