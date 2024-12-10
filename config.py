@@ -311,7 +311,14 @@ app.register_blueprint(security_bp)
 # SETUP TALISMAN
 csp = {
     'xyz-src': ['\'self\''],
-    'style-src': ["https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"],
+    'style-src': ["https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css",
+                  "http://127.0.0.1:5000/admin/static/bootstrap/bootstrap4/swatch/default/bootstrap.min.css?v=4.2.1",
+                "http://127.0.0.1:5000/admin/static/bootstrap/bootstrap4/css/bootstrap.min.css?v=4.2.1",
+                  "http://127.0.0.1:5000/admin/static/admin/css/bootstrap4/admin.css?v=1.1.1",
+                  "http://127.0.0.1:5000/admin/static/bootstrap/bootstrap4/css/font-awesome.min.css?v=4.7.0",
+                  "http://127.0.0.1:5000/admin/static/vendor/select2/select2.css?v=4.2.1",
+                  "http://127.0.0.1:5000/admin/static/vendor/select2/select2-bootstrap4.css?v=1.4.6",
+                  "http://127.0.0.1:5000/admin/static/vendor/bootstrap-daterangepicker/daterangepicker-bs4.css?v=1.3.22"],
     'script-src': ["https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js",
                    "https://www.google.com/recaptcha/",
                    "https://www.gstatic.com/recaptcha/"],
