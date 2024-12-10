@@ -20,3 +20,4 @@ pyotp
 argon2-cffi
 cryptography
 python-dotenv
+Flask-Talisman

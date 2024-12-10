@@ -19,6 +19,7 @@ from flask_login import LoginManager, UserMixin
 from flask_qrcode import QRcode
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_talisman import Talisman
 from sqlalchemy import MetaData
 from datetime import datetime
 from flask_limiter import Limiter
@@ -306,3 +307,15 @@ else:
 app.register_blueprint(accounts_bp)
 app.register_blueprint(posts_bp)
 app.register_blueprint(security_bp)
+
+# SETUP TALISMAN
+csp = {
+    'xyz-src': ['\'self\''],
+    'style-src': ["https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"],
+    'script-src': ["https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js",
+                   "https://www.google.com/recaptcha/",
+                   "https://www.gstatic.com/recaptcha/"],
+    'frame-src': ["https://www.google.com/recaptcha/",
+                  "https://www.gstatic.com/recaptcha/"]
+}
+talisman = Talisman(app, content_security_policy=csp)
